@@ -1,4 +1,5 @@
 # GYMclaw
+![alt text](claw-gym.PNG)
 
 **A workout journal for your AI agent.**
 
