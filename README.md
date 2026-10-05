@@ -17,10 +17,13 @@ No daemon, no cron, no dashboard. One markdown file. You trigger the reflection 
 
 ### Minimal (template only)
 
-Drop the template into your project root:
+Drop the template into your project root and install the extractor script (requires `jq`):
 
 ```bash
 curl -sSLO https://raw.githubusercontent.com/william-zou21/gymclaw/main/GYMclaw.md
+mkdir -p ~/.claude/skills/gymclaw/scripts
+curl -sSL https://raw.githubusercontent.com/william-zou21/gymclaw/main/skill/scripts/friction.sh \
+  -o ~/.claude/skills/gymclaw/scripts/friction.sh
 ```
 
 Then invoke:
@@ -52,7 +55,7 @@ Claude Code stores every session as a JSONL file under `~/.claude/projects/<CWD_
 When you run a reflection, the skill:
 
 1. Runs `scripts/friction.sh`, which globs the repo directory **and all its worktree directories**, sorts by mtime, and drops the live session.
-2. For the next 5 transcripts, prints every tool call whose result was flagged `is_error` (paired with the input that caused it) and every user message containing correction language. The agent reads a few hundred lines of digest instead of megabytes of JSONL.
+2. For the next 5 transcripts, prints every tool call whose result was flagged `is_error`, paired with the input that caused it and the next call the agent made (usually the fix), and every user message containing correction language. The agent reads a few hundred lines of digest instead of megabytes of JSONL.
 3. Classifies each signal: failed command, hallucination, pushback, environment error, or noise (interrupted calls, cwd resets).
 4. Distills up to 3 new rules, deduped against what's already in the Personal Record.
 5. Appends them to `GYMclaw.md` with today's date.

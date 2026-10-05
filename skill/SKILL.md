@@ -17,10 +17,10 @@ bash ~/.claude/skills/gymclaw/scripts/friction.sh 5
 
 It finds the transcripts for this repo **and every worktree under it**, skips the live session, and prints per session:
 
-- `CALL:` / `ERR:` pairs — every tool call whose result was flagged `is_error`, with the input that caused it.
+- `CALL:` / `ERR:` / `NEXT:` triples — every tool call whose result was flagged `is_error`, the input that caused it, and the next call the agent made (usually the fix).
 - `USER:` lines — human messages containing correction language.
 
-If it prints "No closed transcripts found", say so and stop. Do not invent friction.
+If the script is missing, fetch it first with the curl command from the README's install section. If it prints "No closed transcripts found", say so and stop. Do not invent friction.
 
 Why a script: Claude Code encodes the project path by replacing every non-alphanumeric character with `-` (so `.claude` becomes `-claude`), and the desktop app gives each worktree its own transcript directory holding only its own live session. Hand-computing the path from `pwd` finds nothing.
 

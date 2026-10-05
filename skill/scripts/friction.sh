@@ -34,20 +34,24 @@ fi
 for f in $FILES; do
   echo "=== $(basename "$f") ($(date -r "$f" '+%Y-%m-%d %H:%M'), $(jq -r 'select(.cwd!=null)|.cwd' "$f" | head -1))"
   echo "--- failed tool calls"
-  # tool_result blocks flagged is_error, paired with the tool input that caused them.
-  jq -r '
-    select(.type=="assistant") | .message.content[]? | select(.type=="tool_use")
-    | "\(.id)\t\(.name)\t\(.input | tostring | .[0:200])"' "$f" > /tmp/gymclaw_uses.$$ || true
-  jq -r '
-    select(.type=="user") | .message.content[]?
-    | select(type=="object" and .type=="tool_result" and .is_error==true)
-    | "\(.tool_use_id)\t\(.content | if type=="array" then map(.text? // "") | join(" ") else tostring end | gsub("\n";" ") | .[0:300])"' "$f" \
-  | while IFS=$'\t' read -r id err; do
-      use="$(grep -F "$id" /tmp/gymclaw_uses.$$ | cut -f2- | head -1)"
-      echo "  CALL: ${use:-<unknown>}"
-      echo "  ERR : $err"
-    done
-  rm -f /tmp/gymclaw_uses.$$
+  # One pass: every tool_use and every errored tool_result, in file order. For each error,
+  # print the call that caused it and the NEXT call the agent made (usually the fix).
+  jq -r -n '
+    [inputs] | to_entries | map(.key as $i | .value
+      | if .type=="assistant" then
+          (.message.content[]? | select(.type=="tool_use")
+           | {i:$i, kind:"use", id:.id, text:"\(.name) \(.input|tostring|.[0:200])"})
+        elif .type=="user" then
+          (.message.content[]? | select(type=="object" and .type=="tool_result" and .is_error==true)
+           | {i:$i, kind:"err", id:.tool_use_id,
+              text:(.content | if type=="array" then map(.text? // "") | join(" ") else tostring end
+                    | gsub("\n";" ") | .[0:300])})
+        else empty end) as $ev
+    | $ev[] | select(.kind=="err") | . as $e
+    | "  CALL: " + (($ev[] | select(.kind=="use" and .id==$e.id) | .text) // "<unknown>")
+    + "\n  ERR : " + $e.text
+    + "\n  NEXT: " + (([$ev[] | select(.kind=="use" and .i > $e.i)] | first | .text) // "<none>")
+  ' "$f" || true
   echo "--- user pushback"
   # Human-typed user messages (not tool results) with correction language.
   jq -r '
