@@ -1,18 +1,18 @@
 ---
-name: gymclaw
-description: Run a GYMclaw reflection — scan the last few closed Claude Code session transcripts for hallucinations, failed commands, and user corrections, then distill up to 3 new rules and append them to GYMclaw.md in the project root. Triggers on "run a reflection", "gymclaw", "update the PRs", "workout journal".
+name: gymforclaude
+description: Run a GYMforClaude reflection — scan the last few closed Claude Code session transcripts for hallucinations, failed commands, and user corrections, then distill up to 3 new rules and append them to GYMforClaude.md in the project root. Triggers on "run a reflection", "gymforclaude", "update the PRs", "workout journal".
 ---
 
-# /gymclaw — Reflection Rep
+# /gymforclaude — Reflection Rep
 
-You are running a GYMclaw reflection. Follow these steps in order.
+You are running a GYMforClaude reflection. Follow these steps in order.
 
 ## 1. Extract friction
 
 Do not read raw JSONL by hand. Run the bundled extractor from the project root:
 
 ```bash
-bash ~/.claude/skills/gymclaw/scripts/friction.sh 5
+bash ~/.claude/skills/gymforclaude/scripts/friction.sh 5
 ```
 
 It finds the transcripts for this repo **and every worktree under it**, skips the live session, and prints per session:
@@ -49,9 +49,9 @@ Zero rules is a valid outcome.
 
 ## 4. Dedupe
 
-Read the existing `GYMclaw.md` in the project root. Skip any candidate that duplicates or near-duplicates one already in the **Personal Record** section.
+Read the existing `GYMforClaude.md` in the project root. Skip any candidate that duplicates or near-duplicates one already in the **Personal Record** section.
 
-If `GYMclaw.md` does not exist in the project root, tell the user to copy the template from the GYMclaw repo before running a reflection.
+If `GYMforClaude.md` does not exist in the project root, tell the user to copy the template from the GYMforClaude repo before running a reflection.
 
 ## 5. Append
 

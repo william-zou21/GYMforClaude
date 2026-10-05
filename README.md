@@ -1,9 +1,9 @@
-# GYMclaw
+# GYMforClaude
 ![alt text](claw-gym.PNG)
 
-**A workout journal for your AI agent.**
+**G.Y.M. = Gains from Your Mistakes.** A workout journal for your AI agent.
 
-AI agents plateau without feedback. GYMclaw is a tiny, zero-dependency self-improvement protocol for [Claude Code](https://claude.com/claude-code): your agent reads its own past session transcripts, spots where it hallucinated / failed commands / got corrected, and appends distilled rules to a local `GYMclaw.md` — the "Personal Record" it trains against next rep.
+AI agents plateau without feedback. GYMforClaude is a tiny, zero-dependency self-improvement protocol for [Claude Code](https://claude.com/claude-code): your agent reads its own past session transcripts, spots where it hallucinated / failed commands / got corrected, and appends distilled rules to a local `GYMforClaude.md` — the "Personal Record" it trains against next rep.
 
 No daemon, no cron, no dashboard. One markdown file. You trigger the reflection when you want it.
 
@@ -20,33 +20,33 @@ No daemon, no cron, no dashboard. One markdown file. You trigger the reflection 
 Drop the template into your project root and install the extractor script (requires `jq`):
 
 ```bash
-curl -sSLO https://raw.githubusercontent.com/william-zou21/gymclaw/main/GYMclaw.md
-mkdir -p ~/.claude/skills/gymclaw/scripts
+curl -sSLO https://raw.githubusercontent.com/william-zou21/gymclaw/main/GYMforClaude.md
+mkdir -p ~/.claude/skills/gymforclaude/scripts
 curl -sSL https://raw.githubusercontent.com/william-zou21/gymclaw/main/skill/scripts/friction.sh \
-  -o ~/.claude/skills/gymclaw/scripts/friction.sh
+  -o ~/.claude/skills/gymforclaude/scripts/friction.sh
 ```
 
 Then invoke:
 
 ```bash
-claude -p "run a GYMclaw reflection"
+claude -p "run a GYMforClaude reflection"
 ```
 
 ### As a Claude Code skill (recommended)
 
-Install the skill once so you can trigger reflections with `/gymclaw`:
+Install the skill once so you can trigger reflections with `/gymforclaude`:
 
 ```bash
-mkdir -p ~/.claude/skills/gymclaw/scripts
+mkdir -p ~/.claude/skills/gymforclaude/scripts
 curl -sSL https://raw.githubusercontent.com/william-zou21/gymclaw/main/skill/SKILL.md \
-  -o ~/.claude/skills/gymclaw/SKILL.md
+  -o ~/.claude/skills/gymforclaude/SKILL.md
 curl -sSL https://raw.githubusercontent.com/william-zou21/gymclaw/main/skill/scripts/friction.sh \
-  -o ~/.claude/skills/gymclaw/scripts/friction.sh
+  -o ~/.claude/skills/gymforclaude/scripts/friction.sh
 ```
 
 Requires `jq` (`brew install jq`).
 
-Then, in any project, drop a `GYMclaw.md` at the root and run `/gymclaw` inside a Claude Code session.
+Then, in any project, drop a `GYMforClaude.md` at the root and run `/gymforclaude` inside a Claude Code session.
 
 ## How it works
 
@@ -58,7 +58,7 @@ When you run a reflection, the skill:
 2. For the next 5 transcripts, prints every tool call whose result was flagged `is_error`, paired with the input that caused it and the next call the agent made (usually the fix), and every user message containing correction language. The agent reads a few hundred lines of digest instead of megabytes of JSONL.
 3. Classifies each signal: failed command, hallucination, pushback, environment error, or noise (interrupted calls, cwd resets).
 4. Distills up to 3 new rules, deduped against what's already in the Personal Record.
-5. Appends them to `GYMclaw.md` with today's date.
+5. Appends them to `GYMforClaude.md` with today's date.
 
 That's the whole thing.
 

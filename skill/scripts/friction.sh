@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# GYMclaw friction extractor. Prints a compact friction digest from Claude Code
+# GYMforClaude friction extractor. Prints a compact friction digest from Claude Code
 # session transcripts so the agent reads ~hundreds of lines, not megabytes of JSONL.
 #
 # Usage: friction.sh [N_SESSIONS]   (default 5)
