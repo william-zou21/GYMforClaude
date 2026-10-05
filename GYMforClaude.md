@@ -11,7 +11,7 @@ Progressive overload for Claude Code sessions. Learn from friction, encode lesso
 When the user says "run a GYMforClaude reflection" (or invokes `/gymforclaude`), perform these steps:
 
 1. **Extract friction.** Run `bash ~/.claude/skills/gymforclaude/scripts/friction.sh 5` from the project root. If that file does not exist, fetch it first:
-   `mkdir -p ~/.claude/skills/gymforclaude/scripts && curl -sSL https://raw.githubusercontent.com/william-zou21/gymclaw/main/skill/scripts/friction.sh -o ~/.claude/skills/gymforclaude/scripts/friction.sh`
+   `mkdir -p ~/.claude/skills/gymforclaude/scripts && curl -sSL https://raw.githubusercontent.com/william-zou21/GYMforClaude/main/skill/scripts/friction.sh -o ~/.claude/skills/gymforclaude/scripts/friction.sh`
    (requires `jq`). It locates transcripts for this repo and all of its worktrees under `~/.claude/projects/`, skips the live session, and prints each failed tool call (`CALL:`/`ERR:`), the next call the agent made after it (`NEXT:`, usually the fix), and each correcting user message (`USER:`). Do not hand-parse JSONL. If it reports no closed transcripts, stop here.
 
 2. **Classify.** `Exit code N` with a later fix = failed command. Missing file / flag / package / API = hallucination. "The user doesn't want to proceed" = pushback. "Tool call interrupted" and "Shell cwd was reset" = noise, skip. MCP 404 / auth errors = environment, at most one rule.

@@ -20,9 +20,9 @@ No daemon, no cron, no dashboard. One markdown file. You trigger the reflection 
 Drop the template into your project root and install the extractor script (requires `jq`):
 
 ```bash
-curl -sSLO https://raw.githubusercontent.com/william-zou21/gymclaw/main/GYMforClaude.md
+curl -sSLO https://raw.githubusercontent.com/william-zou21/GYMforClaude/main/GYMforClaude.md
 mkdir -p ~/.claude/skills/gymforclaude/scripts
-curl -sSL https://raw.githubusercontent.com/william-zou21/gymclaw/main/skill/scripts/friction.sh \
+curl -sSL https://raw.githubusercontent.com/william-zou21/GYMforClaude/main/skill/scripts/friction.sh \
   -o ~/.claude/skills/gymforclaude/scripts/friction.sh
 ```
 
@@ -38,9 +38,9 @@ Install the skill once so you can trigger reflections with `/gymforclaude`:
 
 ```bash
 mkdir -p ~/.claude/skills/gymforclaude/scripts
-curl -sSL https://raw.githubusercontent.com/william-zou21/gymclaw/main/skill/SKILL.md \
+curl -sSL https://raw.githubusercontent.com/william-zou21/GYMforClaude/main/skill/SKILL.md \
   -o ~/.claude/skills/gymforclaude/SKILL.md
-curl -sSL https://raw.githubusercontent.com/william-zou21/gymclaw/main/skill/scripts/friction.sh \
+curl -sSL https://raw.githubusercontent.com/william-zou21/GYMforClaude/main/skill/scripts/friction.sh \
   -o ~/.claude/skills/gymforclaude/scripts/friction.sh
 ```
 
