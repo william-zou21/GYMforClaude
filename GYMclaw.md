@@ -8,14 +8,11 @@ Progressive overload for Claude Code sessions. Learn from friction, encode lesso
 
 When the user says "run a GYMclaw reflection" (or invokes `/gymclaw`), perform these steps:
 
-1. **Locate the transcript directory.** Claude Code stores sessions at `~/.claude/projects/<CWD_ENCODED>/*.jsonl`, where `<CWD_ENCODED>` is the current working directory with every `/` replaced by `-` (e.g. `/Users/jane/app` becomes `-Users-jane-app`). Compute it from `pwd`.
+1. **Extract friction.** Run `bash ~/.claude/skills/gymclaw/scripts/friction.sh 5` from the project root. It locates transcripts for this repo and all of its worktrees under `~/.claude/projects/`, skips the live session, and prints each failed tool call (`CALL:`/`ERR:`) and each correcting user message (`USER:`). Do not hand-parse JSONL. If it reports no closed transcripts, stop here.
 
-2. **Pick which sessions to read.** List `*.jsonl` in that dir sorted by modification time (newest first). **Skip the newest file** — that is the currently-running session, writing itself as you read. Read the next 5 files (or fewer if not enough exist).
+2. **Classify.** `Exit code N` with a later fix = failed command. Missing file / flag / package / API = hallucination. "The user doesn't want to proceed" = pushback. "Tool call interrupted" and "Shell cwd was reset" = noise, skip. MCP 404 / auth errors = environment, at most one rule.
 
-3. **Scan for friction signals.** In each session, walk the JSONL lines and look for:
-   - Assistant hallucinations that the user corrected (non-existent libraries, APIs, file paths, flags).
-   - Bash tool calls that exited non-zero, and what the follow-up fix was.
-   - User messages that say "no", "don't", "stop", "not like that", "wrong", or otherwise push back on an approach.
+3. **Scan the digest** for the pattern behind each signal: what the agent assumed, what was true, what fixed it.
 
 4. **Distill ≤3 new rules.** Each rule is one imperative line, project-specific where possible. Vague rules ("write better code") are useless — prefer concrete ones ("in this repo, use `lucide-react` for icons, not `@radix-ui/react-icons`").
 

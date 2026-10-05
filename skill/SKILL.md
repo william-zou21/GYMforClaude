@@ -7,59 +7,62 @@ description: Run a GYMclaw reflection — scan the last few closed Claude Code s
 
 You are running a GYMclaw reflection. Follow these steps in order.
 
-## 1. Locate the transcript directory
+## 1. Extract friction
 
-Claude Code writes session transcripts to `~/.claude/projects/<CWD_ENCODED>/*.jsonl`, where `<CWD_ENCODED>` is the current working directory with every `/` replaced by `-`.
-
-Compute it:
+Do not read raw JSONL by hand. Run the bundled extractor from the project root:
 
 ```bash
-pwd | sed 's|/|-|g'
+bash ~/.claude/skills/gymclaw/scripts/friction.sh 5
 ```
 
-Then the full path is `~/.claude/projects/$(pwd | sed 's|/|-|g')/`.
+It finds the transcripts for this repo **and every worktree under it**, skips the live session, and prints per session:
 
-## 2. Pick which sessions to read
+- `CALL:` / `ERR:` pairs — every tool call whose result was flagged `is_error`, with the input that caused it.
+- `USER:` lines — human messages containing correction language.
 
-List `*.jsonl` in that directory by modification time, newest first. **Skip the newest file** — that is the live session writing itself as you read. Take the next 5 (or fewer if not enough exist).
+If it prints "No closed transcripts found", say so and stop. Do not invent friction.
 
-```bash
-ls -t ~/.claude/projects/$(pwd | sed 's|/|-|g')/*.jsonl 2>/dev/null | tail -n +2 | head -n 5
-```
+Why a script: Claude Code encodes the project path by replacing every non-alphanumeric character with `-` (so `.claude` becomes `-claude`), and the desktop app gives each worktree its own transcript directory holding only its own live session. Hand-computing the path from `pwd` finds nothing.
 
-## 3. Scan for friction signals
+## 2. Classify each signal
 
-Each JSONL line is a JSON object. For each file, walk the lines and look for:
+Not every `ERR:` is the agent's fault. Sort them:
 
-- **Hallucinations corrected by the user:** assistant claims a library / API / file / flag that does not exist, and the next user message points it out.
-- **Failed bash calls:** `tool_use_result` entries with non-zero exits, paired with the follow-up fix.
-- **User pushback:** user messages containing "no", "don't", "stop", "not like that", "wrong", "actually", or other corrections.
+| Signal | Treat as |
+|---|---|
+| `Exit code N` from Bash with a later fix in the same session | **Failed command** — the fix is the rule. |
+| Error names a missing file, flag, package, or API | **Hallucination** — the rule names the real one. |
+| `The user doesn't want to proceed with this tool use` | **Pushback** — the user vetoed the approach. |
+| `Tool call interrupted: the session ended` | Noise. Skip. |
+| `Shell cwd was reset to ...` | Noise. Skip. |
+| MCP tool returns 404 / auth / not-found | **Environment**, not agent error. One rule at most, e.g. "check X is connected before calling it". |
 
-## 4. Distill ≤3 rules
+## 3. Distill ≤3 rules
 
 Each rule is one imperative line. Prefer concrete, project-scoped rules over vague ones.
 
 - Good: `In this repo, use lucide-react for icons, not @radix-ui/react-icons.`
+- Good: `The Vercel MCP get_auth_user call 404s on this account; use list_teams first.`
 - Bad: `Write better code.`
 
-If you cannot find ≥1 real friction signal, it is fine to produce zero rules. Do not invent friction.
+Zero rules is a valid outcome.
 
-## 5. Dedupe
+## 4. Dedupe
 
-Read the existing `GYMclaw.md` in the project root. Skip any candidate rule that duplicates or near-duplicates one already in the **Personal Record** section.
+Read the existing `GYMclaw.md` in the project root. Skip any candidate that duplicates or near-duplicates one already in the **Personal Record** section.
 
 If `GYMclaw.md` does not exist in the project root, tell the user to copy the template from the GYMclaw repo before running a reflection.
 
-## 6. Append
+## 5. Append
 
-Append surviving rules to `GYMclaw.md` under the **Personal Record** heading, in the format:
+Append surviving rules under the **Personal Record** heading:
 
 ```
 - [YYYY-MM-DD] <rule text>
 ```
 
-Use today's date. Use the `Edit` tool with the existing "<!-- rules appended below this line -->" marker as your anchor to keep placement stable.
+Use today's date. Use the `Edit` tool with the existing `<!-- rules appended below this line -->` marker as your anchor to keep placement stable.
 
-## 7. Report
+## 6. Report
 
-Print the rules you added. If none were added (all duplicates, or no friction found), say so in one sentence. Do not narrate steps 1–6 to the user unless they ask.
+Print the rules you added. If none were added, say so in one sentence. Do not narrate steps 1–5 unless asked.
