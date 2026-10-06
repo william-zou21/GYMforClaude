@@ -4,8 +4,15 @@
 #
 # Usage: friction.sh [N_SESSIONS]   (default 5)
 # Requires: jq
+#
+# Watermark: if ./GYMforClaude.md contains "<!-- last-reflected: <epoch> -->", only
+# transcripts modified after that time are read, so nightly runs never re-read the
+# same sessions. The script ends with a "WATERMARK: <epoch> (<date>)" line for the
+# skill to write back.
 set -euo pipefail
 N="${1:-5}"
+SINCE="$(grep -o 'last-reflected: [0-9]*' GYMforClaude.md 2>/dev/null | grep -o '[0-9]*$' || true)"
+SINCE="${SINCE:-0}"
 command -v jq >/dev/null || { echo "jq is required (brew install jq)" >&2; exit 2; }
 
 # Encode cwd the way Claude Code does: every non-alphanumeric char becomes '-'.
@@ -23,15 +30,22 @@ if [ -n "${CLAUDE_SESSION_ID:-}" ]; then
 else
   FILES="$(printf '%s\n' "$FILES" | tail -n +2)"
 fi
-FILES="$(printf '%s\n' "$FILES" | grep . | head -n "$N" || true)"
+# Drop anything not modified since the watermark, then cap at N.
+FILES="$(for f in $FILES; do [ "$(date -r "$f" +%s)" -gt "$SINCE" ] && echo "$f"; done | head -n "$N" || true)"
 
 if [ -z "$FILES" ]; then
-  echo "No closed transcripts found under $PROJ/$ROOT*/ (only the live session exists, or transcripts were cleaned up)."
-  echo "Tip: transcripts older than cleanupPeriodDays (default 30) are deleted by Claude Code."
+  if [ "$SINCE" -gt 0 ]; then
+    echo "No transcripts modified since last reflection ($(date -r "$SINCE" '+%Y-%m-%d %H:%M')). Nothing new this rep."
+  else
+    echo "No closed transcripts found under $PROJ/$ROOT*/ (only the live session exists, or transcripts were cleaned up)."
+    echo "Tip: transcripts older than cleanupPeriodDays (default 30) are deleted by Claude Code."
+  fi
   exit 0
 fi
+NEWEST=0
 
 for f in $FILES; do
+  m="$(date -r "$f" +%s)"; [ "$m" -gt "$NEWEST" ] && NEWEST="$m"
   echo "=== $(basename "$f") ($(date -r "$f" '+%Y-%m-%d %H:%M'), $(jq -r 'select(.cwd!=null)|.cwd' "$f" | head -1))"
   echo "--- failed tool calls"
   # One pass: every tool_use and every errored tool_result, in file order. For each error,
@@ -62,3 +76,5 @@ for f in $FILES; do
     | select(test("\\b(no|don.t|stop|wrong|not like that|actually|instead|undo|revert|why did you|that.s not|doesn.t exist|user error)\\b"; "i"))
     | "  USER: " + (gsub("\n";" ") | .[0:300])' "$f" || true
 done
+
+echo "WATERMARK: $NEWEST ($(date -r "$NEWEST" '+%Y-%m-%d %H:%M'))"
