@@ -15,12 +15,14 @@ Do not read raw JSONL by hand. Run the bundled extractor from the project root:
 bash ~/.claude/skills/gymforclaude/scripts/friction.sh 5
 ```
 
-It finds the transcripts for this repo **and every worktree under it**, skips the live session, and prints per session:
+It finds the transcripts for this repo **and every worktree under it**, skips the live session, skips anything already reflected on (via the `last-reflected` watermark in `GYMforClaude.md`), and prints per session:
 
 - `CALL:` / `ERR:` / `NEXT:` triples — every tool call whose result was flagged `is_error`, the input that caused it, and the next call the agent made (usually the fix).
 - `USER:` lines — human messages containing correction language.
 
-If the script is missing, fetch it first with the curl command from the README's install section. If it prints "No closed transcripts found", say so and stop. Do not invent friction.
+The last line is `WATERMARK: <epoch> (<date>)`; keep it for step 6.
+
+If the script is missing, fetch it first with the curl command from the README's install section. If it prints "No closed transcripts found" or "Nothing new this rep", say so and stop. Do not invent friction.
 
 Why a script: Claude Code encodes the project path by replacing every non-alphanumeric character with `-` (so `.claude` becomes `-claude`), and the desktop app gives each worktree its own transcript directory holding only its own live session. Hand-computing the path from `pwd` finds nothing.
 
@@ -41,15 +43,26 @@ Not every `ERR:` is the agent's fault. Sort them:
 
 Each rule is one imperative line. Prefer concrete, project-scoped rules over vague ones.
 
-- Good: `In this repo, use lucide-react for icons, not @radix-ui/react-icons.`
-- Good: `The Vercel MCP get_auth_user call 404s on this account; use list_teams first.`
-- Bad: `Write better code.`
+Start each rule with its scope so later reps can tell when a new rule replaces it.
+
+- Good: `For icons in this repo, use lucide-react, not @radix-ui/react-icons.`
+- Good: `For Vercel MCP calls, skip get_auth_user (404s on this account); call list_teams first.`
+- Bad: `Write better code.` (no scope, nothing to supersede)
 
 Zero rules is a valid outcome.
 
-## 4. Dedupe
+## 4. Dedupe or supersede
 
-Read the existing `GYMforClaude.md` in the project root. Skip any candidate that duplicates or near-duplicates one already in the **Personal Record** section.
+Read the existing `GYMforClaude.md` in the project root and compare each candidate against the **Personal Record**:
+
+- **Same rule, same advice** → drop the candidate.
+- **Same scope, different advice** → the candidate supersedes. Edit the old line in place rather than appending, so the record never holds two live answers for one situation:
+
+  ```
+  - [2026-10-19] For Vercel deploys, do Y. (supersedes 2026-10-05: do X)
+  ```
+
+- **New scope** → append in step 5.
 
 If `GYMforClaude.md` does not exist in the project root, tell the user to copy the template from the GYMforClaude repo before running a reflection.
 
@@ -63,6 +76,10 @@ Append surviving rules under the **Personal Record** heading:
 
 Use today's date. Use the `Edit` tool with the existing `<!-- rules appended below this line -->` marker as your anchor to keep placement stable.
 
-## 6. Report
+## 6. Advance the watermark
 
-Print the rules you added. If none were added, say so in one sentence. Do not narrate steps 1–5 unless asked.
+Replace the `<!-- last-reflected: ... -->` comment in `GYMforClaude.md` with the epoch from the script's `WATERMARK:` line (add the comment directly under the Personal Record heading if it is missing). Do this even when zero rules were added, so the next rep skips these sessions.
+
+## 7. Report
+
+Print the rules you added or superseded. If none, say so in one sentence. Do not narrate steps 1–6 unless asked.

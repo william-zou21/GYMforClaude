@@ -57,14 +57,14 @@ When you run a reflection, the skill:
 1. Runs `scripts/friction.sh`, which globs the repo directory **and all its worktree directories**, sorts by mtime, and drops the live session.
 2. For the next 5 transcripts, prints every tool call whose result was flagged `is_error`, paired with the input that caused it and the next call the agent made (usually the fix), and every user message containing correction language. The agent reads a few hundred lines of digest instead of megabytes of JSONL.
 3. Classifies each signal: failed command, hallucination, pushback, environment error, or noise (interrupted calls, cwd resets).
-4. Distills up to 3 new rules, deduped against what's already in the Personal Record.
-5. Appends them to `GYMforClaude.md` with today's date.
+4. Distills up to 3 new rules. A rule that duplicates an existing one is dropped; a rule that gives new advice for an existing scope replaces the old line in place, so the record never holds two answers for one situation.
+5. Appends new rules to `GYMforClaude.md` with today's date and advances a `last-reflected` watermark, so the next rep only reads sessions it has not seen.
 
 That's the whole thing.
 
 ## Caveats
 
-- **Not automated.** You invoke it. Consider running it at the end of a working session.
+- **Not automated.** You invoke it. Consider running it at the end of a working session, or nightly with `claude -p "run a GYMforClaude reflection"`; the watermark makes repeated runs cheap.
 - **Transcripts expire.** Claude Code deletes transcripts older than `cleanupPeriodDays` (default 30). Raise it in `~/.claude/settings.json` if you want a longer memory.
 - **Quality follows your last 5 reps.** If you rarely correct the agent, there's nothing to learn from.
 - **Prune occasionally.** The Personal Record grows. Old / superseded rules should be removed by hand.
